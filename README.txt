@@ -1,6 +1,11 @@
 = cloudrcs
 
-* FIX (url)
+Get the code at:
+http://github.com/hallettj/cloudrcs/tree/master
+
+File bugs at:
+http://hallettj.lighthouseapp.com/projects/11392/home
+
 
 == DESCRIPTION:
 
