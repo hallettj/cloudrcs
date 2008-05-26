@@ -10,8 +10,8 @@ module CloudRCS
   class Hunk < PrimitivePatch
     serialize :contents, Array
 
-    validates_presence_of :path, :contents, :line
-    validates_numericality_of :line, :only_integer => true, :greater_than_or_equal_to => 1
+    validates_presence_of :path, :contents, :position
+    validates_numericality_of :position, :only_integer => true, :greater_than_or_equal_to => 1
 
     def validate
       # Make sure diffs only contain the actions '+' and '-'
@@ -30,7 +30,7 @@ module CloudRCS
     #   end
     
     def to_s
-      "hunk #{self.class.escape_path(path)} #{line}\n" + contents.collect do |d|
+      "hunk #{self.class.escape_path(path)} #{position}\n" + contents.collect do |d|
         "#{d.action}#{d.element}"
       end.join("\n")
     end
@@ -43,7 +43,7 @@ module CloudRCS
       new_adds = removed_lines.collect do |d|
         Diff::LCS::Change.new('+', d.position, d.element)
       end
-      Hunk.new(:path => path, :line => line, :contents => (new_removals + new_adds))
+      Hunk.new(:path => path, :position => position, :contents => (new_removals + new_adds))
     end
 
     # Given another patch, generates two new patches that have the
@@ -55,35 +55,35 @@ module CloudRCS
       if patch.is_a? Hunk and patch.path == self.path
 
         # self is applied first and precedes patch in the file
-        if self.line + self.lengthnew < patch.line
+        if self.position + self.lengthnew < patch.position
           patch1 = Hunk.new(:path => patch.path,
-                            :line => (patch.line - self.lengthnew + self.lengthold),
+                            :position => (patch.position - self.lengthnew + self.lengthold),
                             :contents => patch.contents)
-          patch2 = Hunk.new(:path => self.path, :line => self.line, :contents => self.contents)
+          patch2 = Hunk.new(:path => self.path, :position => self.position, :contents => self.contents)
           
         # self is applied first, but is preceded by patch in the file          
-        elsif patch.line + patch.lengthold < self.line
-          patch1 = Hunk.new(:path => patch.path, :line => patch.line, :contents => patch.contents)
+        elsif patch.position + patch.lengthold < self.position
+          patch1 = Hunk.new(:path => patch.path, :position => patch.position, :contents => patch.contents)
           patch2 = Hunk.new(:path => self.path, 
-                            :line => (self.line + patch.lengthnew - patch.lengthold),
+                            :position => (self.position + patch.lengthnew - patch.lengthold),
                             :contents => self.contents)
           
         # patch precedes self in file, but bumps up against it
-        elsif patch.line + patch.lengthnew == self.line and
+        elsif patch.position + patch.lengthnew == self.position and
             self.lengthold != 0 and patch.lengthold != 0 and 
             self.lengthnew != 0 and patch.lengthnew != 0
-          patch1 = Hunk.new(:path => patch.path, :line => patch.line, :contents => patch.contents)
+          patch1 = Hunk.new(:path => patch.path, :position => patch.position, :contents => patch.contents)
           patch2 = Hunk.new(:path => self.path, 
-                            :line => (self.line - patch.lengthnew + patch.lengthold), 
+                            :position => (self.position - patch.lengthnew + patch.lengthold), 
                             :contents => self.contents)
           
         # self precedes patch in file, but bumps up against it
-        elsif self.line + self.lengthold == patch.line and
+        elsif self.position + self.lengthold == patch.position and
             self.lengthold != 0 and patch.lengthold != 0 and 
             self.lengthnew != 0 and patch.lengthnew != 0
-          patch1 = Hunk.new(:path => patch.path, :line => patch.line, :contents => patch.contents)
+          patch1 = Hunk.new(:path => patch.path, :position => patch.position, :contents => patch.contents)
           patch2 = Hunk.new(:path => self.path, 
-                            :line => (self.line + patch.lengthnew - patch.lengthold), 
+                            :position => (self.position + patch.lengthnew - patch.lengthold), 
                             :contents => self.contents)
           
         # Patches overlap. This is a conflict scenario
@@ -117,16 +117,16 @@ module CloudRCS
 
       # First, remove lines
       removed_lines.each do |d|
-        if lines[line-1] == d.element.sub(/(\s+)\$\s*$/) { $1 }
-          lines.delete_at(line-1)
+        if lines[position-1] == d.element.sub(/(\s+)\$\s*$/) { $1 }
+          lines.delete_at(position-1)
         else
-          raise ApplyException.new(true), "Line in hunk marked for removal does not match contents of existing line in file<br/>#{line-1} -'#{lines[line-1]}'<br/>#{d.position} -'#{d.element}'"
+          raise ApplyException.new(true), "Line in hunk marked for removal does not match contents of existing line in file<br/>#{position-1} -'#{lines[position-1]}'<br/>#{d.position} -'#{d.element}'"
         end
       end
 
       # Next, add lines
       added_lines.each_with_index do |d,i|
-        lines.insert(line - 1 + i, d.element.sub(/(\s+)\$\s*$/) { $1 })
+        lines.insert(position - 1 + i, d.element.sub(/(\s+)\$\s*$/) { $1 })
       end
 
       file.contents = lines.join("\n")
@@ -207,9 +207,9 @@ module CloudRCS
           # Diff::LCS counts lines starting from 0. So we add 1 to the
           # position of the first changed line to get the
           # darcs-compatible starting line number for the Hunk patch.
-          line = d.first.position + 1
+          position = d.first.position + 1
           
-          hunks << Hunk.new(:path => file_path, :line => line, :contents => d)
+          hunks << Hunk.new(:path => file_path, :position => position, :contents => d)
         end
         return hunks
       end
@@ -220,7 +220,7 @@ module CloudRCS
           raise ParseException.new(true), "Failed to parse hunk patch: \"#{contents}\""
         end
         file_path = unescape_path($1)
-        starting_line = $2.to_i
+        starting_position = $2.to_i
         contents = $3
 
         last_action = nil
@@ -239,17 +239,17 @@ module CloudRCS
           # If the line is empty, $1 will be nil. So it is important to
           # pass $1.to_s instead of just $1 to change nil to "".
           if line =~ /^\+(.*[\S\$])?\s*$/
-            diffs << Diff::LCS::Change.new('+', starting_line + add_line_offset, $1.to_s)
+            diffs << Diff::LCS::Change.new('+', starting_position + add_line_offset, $1.to_s)
             add_line_offset += 1
           elsif line =~ /^-(.*[\S\$])?\s*$/
-            diffs << Diff::LCS::Change.new('-', starting_line + del_line_offset, $1.to_s)
+            diffs << Diff::LCS::Change.new('-', starting_position + del_line_offset, $1.to_s)
             del_line_offset += 1
           else
             raise "Failed to parse a line in hunk: \"#{line}\""
           end
         end
 
-        return Hunk.new(:path => file_path, :line => starting_line, :contents => diffs)
+        return Hunk.new(:path => file_path, :position => starting_position, :contents => diffs)
       end
 
     end
