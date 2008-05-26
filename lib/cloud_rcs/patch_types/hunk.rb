@@ -48,11 +48,11 @@ module CloudRCS
 
     # Given another patch, generates two new patches that have the
     # same effect as the original two, but with the order of the
-    # analagous patches reversed. The message receiver is the first
+    # analogous patches reversed. The message receiver is the first
     # patch, and the argument is the second; so after commuting the
     # analog of this patch will be second.
     def commute(patch)
-      if patch.is_a? Hunk
+      if patch.is_a? Hunk and patch.path == self.path
 
         # self is applied first and precedes patch in the file
         if self.line + self.lengthnew < patch.line
