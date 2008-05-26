@@ -13,6 +13,7 @@ lib/cloudrcs.rb
 lib/cloud_rcs/patch.rb
 lib/cloud_rcs/primitive_patch.rb
 lib/cloud_rcs/patch_types/addfile.rb
+lib/cloud_rcs/patch_types/binary.rb
 lib/cloud_rcs/patch_types/hunk.rb
 lib/cloud_rcs/patch_types/move.rb
 lib/cloud_rcs/patch_types/rmfile.rb
