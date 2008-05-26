@@ -33,7 +33,7 @@ module CloudRCS
     protected
 
     # We want to store the contents of a binary file encoded as a
-    # hexidecimal number. These two methods allow for translating
+    # hexidecimal value. These two methods allow for translating
     # between binary and hexidecimal.
     #
     # Code borrowed from:
@@ -43,7 +43,7 @@ module CloudRCS
     end
 
     def binary_to_hex(bin)
-      bin.unpack("H*")
+      bin.unpack("H*").first
     end
     
   end
