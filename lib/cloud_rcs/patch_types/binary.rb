@@ -20,7 +20,7 @@ module CloudRCS
     def apply_to(file)
       return file unless file.path == path
 
-      hex_contents = binary_to_hex(file.contents)
+      hex_contents = Binary.binary_to_hex(file.contents)
 
       # Check that the patch matches the file contents
       unless hex_contents[position...position+lengthold] ==
@@ -36,7 +36,7 @@ module CloudRCS
         hex_contents.insert(position + i, d.element)
       end
 
-      file.contents = hex_to_binary(hex_contents)
+      file.contents = Binary.hex_to_binary(hex_contents)
       return file
     end
 
