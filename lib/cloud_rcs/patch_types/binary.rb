@@ -23,17 +23,18 @@ module CloudRCS
       hex_contents = Binary.binary_to_hex(file.contents)
 
       # Check that the patch matches the file contents
-      unless hex_contents[position...position+lengthold] ==
-          removed.collect { |r| r.element }.join
-        raise ApplyException.new(true, "Portion of binary patch marked for removal does not match existing contents in file.")
+      unless hex_contents[position...position+lengthold] == removed
+        raise ApplyException.new(true), "Portion of binary patch marked for removal does not match existing contents in file. Existing contents at position #{position}: '#{hex_contents[position...position+lengthold]}' ; marked for removal: '#{removed}'"
       end
 
       # Then, remove stuff
-      hex_contents[position...position+lengthold] = ""
+      unless removed.blank?
+        hex_contents[position...position+lengthold] = ""
+      end
 
       # Finally, add stuff
-      added.each_with_index do |d,i|
-        hex_contents.insert(position + i, d.element)
+      unless added.blank?
+        hex_contents.insert(position, added)
       end
 
       file.contents = Binary.hex_to_binary(hex_contents)
@@ -41,13 +42,10 @@ module CloudRCS
     end
 
     def inverse
-      new_removals = added.collect do |d|
-        Diff::LCS::Change.new('-', d.position, d.element)
-      end
-      new_adds = removed.collect do |d|
-        Diff::LCS::Change.new('+', d.position, d.element)
-      end
-      Hunk.new(:path => path, :position => position, :contents => (new_removals + new_adds))
+      Binary.new(:path => path,
+                 :position => position,
+                 :contents => [added, removed],
+                 :inverted => true)
     end
 
     def commute(patch)
@@ -95,11 +93,11 @@ module CloudRCS
           
         # Patches overlap. This is a conflict scenario
         else
-          raise CommuteException.new(true, "Conflict: binary patches overlap.")
+          raise CommuteException.new(true), "Conflict: binary patches overlap."
         end
         
       elsif patch.is_a? Rmfile and patch.path == self.path
-        raise CommuteException.new(true, "Conflict: cannot modify a file after it is removed.")
+        raise CommuteException.new(true), "Conflict: cannot modify a file after it is removed."
 
       elsif patch.is_a? Move and self.path == patch.original_path
         patch1 = patch.clone
@@ -116,21 +114,17 @@ module CloudRCS
 
     def to_s
       header = "binary #{self.class.escape_path(path)} #{position}"
-      old = removed.collect { |d| d.element }.join.scan(/.{1,78}/).collect do |c|
-        '-' + c
-      end.join("\n")
-      new = added.collect { |d| d.element }.join.scan(/.{1,78}/).collect do |c|
-        '+' + c
-      end.join("\n")
-      return [header, old, new].join("\n")
+      old = removed.scan(/.{1,78}/).collect { |c| '-' + c }.join("\n")
+      new = added.scan(/.{1,78}/).collect { |c| '+' + c }.join("\n")
+      return [header, old, new].delete_if { |e| e.blank? }.join("\n")
     end
 
     def removed
-      contents.find_all { |d| d.action == '-' }
+      contents.first
     end
 
     def added
-      contents.find_all { |d| d.action == '+' }
+      contents.last
     end
 
     def lengthold
@@ -150,10 +144,7 @@ module CloudRCS
       end
 
       def generate(orig_file, changed_file)
-        unless orig_file.contents.is_binary_data? or 
-            changed_file.contents.is_binary_data?
-          return
-        end
+        return unless orig_file.contents.is_binary_data? or changed_file.contents.is_binary_data?
 
         # Convert binary data to hexadecimal for storage in a text
         # file
@@ -162,13 +153,34 @@ module CloudRCS
 
         file_path = orig_file ? orig_file.path : changed_file.path
 
-        diffs = Diff::LCS(orig_hex, changed_hex)
+        diffs = Diff::LCS.diff(orig_hex, changed_hex)
         chunks = []
+        offset = 0
         diffs.each do |d|
+
+          # We need to recalculate positions for removals - just as in
+          # hunk generation.
+          unless chunks.empty?
+            offset += chunks.last.lengthnew - chunks.last.lengthold
+          end
+          d.collect! do |l|
+            if l.action == '-'
+              Diff::LCS::Change.new(l.action, l.position + offset, l.element)
+            else
+              l
+            end
+          end
+
+          position = d.first.position
+
+          removed = d.find_all { |l| l.action == '-' }.collect { |l| l.element }.join
+          added = d.find_all { |l| l.action == '+' }.collect { |l| l.element }.join
           
-          chunks << Binary.new(:contents => d,
-                               :position => d.first.position,
-                               :path => file_path)
+          unless removed.blank? and added.blank?
+            chunks << Binary.new(:contents => [removed, added],
+                                 :position => d.first.position,
+                                 :path => file_path)
+          end
           
         end
         
@@ -198,19 +210,13 @@ module CloudRCS
           end
         end
 
-        removed = removed.join.scan(/.{1}/).collect do |r|
-          Diff::LCS::Change.new('-', starting_position + removed_offset, r)
-        end
-        added = added.join.scan(/.{1}/).collect do |r|
-          Diff::LCS::Change.new('+', starting_position + added_offset, r)
-        end
+        removed = removed.join
+        added = added.join
 
         return Binary.new(:path => file_path, 
                           :position => starting_position, 
-                          :contents => (removed + added))
+                          :contents => [removed, added])
       end
-      
-      protected
       
       # We want to store the contents of a binary file encoded as a
       # hexidecimal value. These two methods allow for translating
