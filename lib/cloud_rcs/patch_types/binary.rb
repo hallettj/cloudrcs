@@ -148,8 +148,8 @@ module CloudRCS
 
         # Convert binary data to hexadecimal for storage in a text
         # file
-        orig_hex = orig_file ? binary_to_hex(orig_file.contents) : ""
-        changed_hex = changed_file ? binary_to_hex(changed_file.contents) : ""
+        orig_hex = orig_file ? binary_to_hex(orig_file.contents).scan(/.{2}/) : []
+        changed_hex = changed_file ? binary_to_hex(changed_file.contents).scan(/.{2}/) : []
 
         file_path = orig_file ? orig_file.path : changed_file.path
 
@@ -165,20 +165,20 @@ module CloudRCS
           end
           d.collect! do |l|
             if l.action == '-'
-              Diff::LCS::Change.new(l.action, l.position + offset, l.element)
+              Diff::LCS::Change.new(l.action, l.position + (offset / 2), l.element)
             else
               l
             end
           end
 
-          position = d.first.position
+          position = d.first.position * 2
 
           removed = d.find_all { |l| l.action == '-' }.collect { |l| l.element }.join
           added = d.find_all { |l| l.action == '+' }.collect { |l| l.element }.join
           
           unless removed.blank? and added.blank?
             chunks << Binary.new(:contents => [removed, added],
-                                 :position => d.first.position,
+                                 :position => position,
                                  :path => file_path)
           end
           
