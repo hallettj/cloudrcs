@@ -166,6 +166,7 @@ module CloudRCS
       # separate Hunk patches and return the resulting list.
       def generate(orig_file, changed_file)
         return if orig_file.nil? and changed_file.nil?
+        return if orig_file.contents.is_binary_data? or changed_file.contents.is_binary_data?
 
         # If the original or the changed file is nil, the hunk should
         # contain the entirety of the other file. This is so that a
@@ -201,7 +202,7 @@ module CloudRCS
             else
               l
             end
-          end        
+          end
 
           # The darcs patch format counts lines starting from 1; whereas
           # Diff::LCS counts lines starting from 0. So we add 1 to the
