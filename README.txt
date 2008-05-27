@@ -28,10 +28,10 @@ new patch type, it is only necessary to define a subclass of
 CloudRCS::PrimitivePatch that implements the methods of PrmitivePatch
 that indicate that they should be overridden.
 
-At this point, CloudRCS is not yet complete. Patch types for
-manipulating directories and binary files have not been implemented;
-so currently CloudRCS is limited to manipulating text files in a
-repository root. 
+CloudRCS is not yet complete. Patch types for manipulating directories
+have not been implemented; so currently CloudRCS is limited flat
+repositories. However, binary patches have recently been implemented;
+and patch types for directories should follow shortly.
 
 In addition, the merge algorithm is implemented and working - but it
 is not quite finished. It will fail in certain cases where multiple
