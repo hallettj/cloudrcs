@@ -144,7 +144,9 @@ module CloudRCS
       end
 
       def generate(orig_file, changed_file)
-        return unless orig_file.contents.is_binary_data? or changed_file.contents.is_binary_data?
+        return if orig_file.nil? and changed_file.nil?
+        return unless (orig_file and orig_file.contents.is_binary_data?) or 
+          (changed_file and changed_file.contents.is_binary_data?)
 
         # Convert binary data to hexadecimal for storage in a text
         # file
