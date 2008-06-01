@@ -18,7 +18,7 @@ module CloudRCS
     #  validates_presence_of :patch_id
     #  validates_presence_of :file_id
     
-    acts_as_list :scope => :patch_id
+    acts_as_list :column => :rank, :scope => :patch_id
 
     def apply!
       target_file = locate_file(original_path || path)

@@ -19,7 +19,7 @@ module CloudRCS
 
     has_many(:patches, 
              :class_name => "PrimitivePatch", 
-             :order => "position", 
+             :order => "rank",
              :dependent => :destroy)
     
     acts_as_list :scope => :owner_id
