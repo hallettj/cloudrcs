@@ -30,13 +30,6 @@ module CloudRCS
       return patch1, patch2
     end
 
-    # A special implementation of apply! is necessary in this case.
-    def apply!
-      file = locate_file(path)
-      file.destroy unless file.blank?
-      return file
-    end
-
     def apply_to(file)
       return file unless file and file.path == path
       return nil  # Returning nil simulates deletion.

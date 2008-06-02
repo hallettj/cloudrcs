@@ -23,7 +23,12 @@ module CloudRCS
     def apply!
       target_file = locate_file(original_path || path)
       target_file = apply_to(target_file)
-      target_file.save
+      old_target = target_file
+      if target_file.nil?
+        old_target.destroy
+      else
+        target_file.save
+      end
 #      update_attribute(:file, target_file)
       return target_file
     end
