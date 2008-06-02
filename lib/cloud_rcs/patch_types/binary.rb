@@ -6,17 +6,6 @@ module CloudRCS
     validates_presence_of :path, :contents, :position
     validates_numericality_of :position, :only_integer => true, :greater_than_or_equal_to => 0
 
-    def validate
-      # Make sure diffs only contain the actions '+' and '-'
-      if contents.respond_to? :each
-        contents.each do |d|
-          unless ['+','-'].include? d.action
-            errors.add(:contents, "contains an unknown action.")
-          end
-        end
-      end
-    end
-
     def apply_to(file)
       return file unless file.path == path
 
