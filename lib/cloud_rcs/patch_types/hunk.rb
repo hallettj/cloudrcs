@@ -120,7 +120,7 @@ module CloudRCS
         if lines[position-1] == d.element.sub(/(\s+)\$\s*$/) { $1 }
           lines.delete_at(position-1)
         else
-          raise ApplyException.new(true), "Line in hunk marked for removal does not match contents of existing line in file<br/>#{position} -'#{lines[position-1]}'<br/>#{d.position} -'#{d.element}'"
+          raise ApplyException.new(true), "Line in hunk marked for removal does not match contents of existing line in file\nfile contents: #{position} -'#{lines[position-1]}'\nline to be removed: #{d.position} -'#{d.element}'"
         end
       end
 
