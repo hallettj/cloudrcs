@@ -22,8 +22,8 @@ module CloudRCS
 
     def apply!
       target_file = locate_file(original_path || path)
-      target_file = apply_to(target_file)
       old_target = target_file
+      target_file = apply_to(target_file)
       if target_file.nil?
         old_target.destroy
       else
