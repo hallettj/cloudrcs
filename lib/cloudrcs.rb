@@ -8,4 +8,5 @@ require 'activerecord'
 require 'diff/lcs'
 
 require 'acts_as_list'
+require 'digest/sha1'
 require 'cloud_rcs'
