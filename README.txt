@@ -254,9 +254,17 @@ lib/cloud_rcs/patch_types/.
 * activerecord
 * diff-lcs
 
-== INSTALL:
+
+== ADDITIONAL BUILD-TIME REQUIREMENTS:
+
+* hoe
+* newgem
+
+
+== INSTALL FROM SOURCE:
 
 sudo rake install_gem
+
 
 == LICENSE:
 
