@@ -8,7 +8,7 @@ RUBYFORGE_PROJECT = 'cloudrcs' # The unix name for your project
 HOMEPATH = "http://#{RUBYFORGE_PROJECT}.rubyforge.org"
 DOWNLOAD_PATH = "http://rubyforge.org/projects/#{RUBYFORGE_PROJECT}"
 EXTRA_DEPENDENCIES = [
-  ['activerecord', '>= 2.0'],
+  ['activerecord', '>= 2.1'],
   ['diff-lcs', '>= 1.1']
 #  ['activesupport', '>= 1.3.1']
 ]    # An array of rubygem dependencies [name, version]
