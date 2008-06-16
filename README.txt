@@ -259,6 +259,7 @@ lib/cloud_rcs/patch_types/.
 
 * hoe
 * newgem
+* trowel
 
 
 == INSTALL FROM SOURCE:
