@@ -22,4 +22,6 @@ For more information on cloudrcs, see http://github.com/hallettj/cloudrcs/tree/m
   s.rubygems_version = %q{1.1.1}
   s.summary = %q{A Ruby clone of darcs that uses ActiveRecord for storing patches.}
   s.test_files = ["test/test_helper.rb", "test/test_cloudrcs.rb"]
+  s.add_dependency("activerecord", [">= 2.1.0"])
+  s.add_dependency("diff-lcs", [">= 1.1.0"])
 end
