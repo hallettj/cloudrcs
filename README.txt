@@ -262,9 +262,14 @@ lib/cloud_rcs/patch_types/.
 * trowel
 
 
+== INSTALL:
+
+gem install hallettj-cloudrcs -s http://gems.github.com
+
+
 == INSTALL FROM SOURCE:
 
-sudo rake install_gem
+rake install_gem
 
 
 == LICENSE:
